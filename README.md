@@ -15,7 +15,9 @@ With all three of these things, you will be able to detect and lower NOx levels 
 
 
 ```bash
-├── Artifacts                             <-- Directory that will hold Terrafom Scripts and Solution Artifacts
+├── assets                                <-- Directory that will hold solution diagrams
+│   ├── architecture.png                  <-- Architecture of this sample solution
+├── Terraform                             <-- Directory that will hold Terrafom Scripts and Solution Artifacts
 │   ├── chaos_lambda.py                   <-- Lambda function code to simulate out of bounds NOx readings
 │   ├──fix_lambda.py                      <-- Lambda function code to automate NOx level adjustments
 │   ├──aws.tf                             <-- Terraform script to deploy AWS resources
