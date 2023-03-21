@@ -1,23 +1,41 @@
-### Notes
+#  Real-time monitoring and remediation of IoT Devices using Confluent, AWS IoT Core and AWS Lambda
 
-1. See [Sample Project for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/sample-project) that provides step-by-step instructions of running this example.
+Demonstration of using AWS IoT Core and Confluent Cloud to monitor emissions and automate responses using Confluent's AWS Lambda Integration. In this fictional scenario, you are working at a plant that wants to lower its emissions levels. To do this, you will deploy the following:
+1. Air emissions monitoring system - This will gather concentration levels for Carbon Dioxide (CO2) and Nitrogen Oxide (NOx)
+2. Real-time processing pipeline - This will route data to the appropriate destinations and perform transformations to the data needed for downstream systems
+3. Automated Response - This will be triggered when NOx levels trend beyond a set bound. When triggered, ammonia will be injected into the plant's boiler system which will lower the level of NOx.
 
-2. This example assumes that Terraform is run from a host in the private network, where it will have connectivity to the [Kafka REST API](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3)) in other words, to the [REST endpoint](https://docs.confluent.io/cloud/current/clusters/broker-config.html#access-cluster-settings-in-the-ccloud-console) on the provisioned Kafka cluster. If it is not, you must make these changes:
+With all three of these things, you will be able to detect and lower NOx levels in under 10ms.
 
-    * Update the `confluent_api_key` resources by setting their `disable_wait_for_ready` flag to `true`. Otherwise, Terraform will attempt to validate API key creation by listing topics, which will fail without access to the Kafka REST API. Otherwise, you might see errors like:
+<br>
 
-        ```
-        Error: error waiting for Kafka API Key "[REDACTED]" to sync: error listing Kafka Topics using Kafka API Key "[REDACTED]": Get "[https://[REDACTED]/kafka/v3/clusters/[REDACTED]/topics](https://[REDACTED]/kafka/v3/clusters/[REDACTED]/topics)": GET [https://[REDACTED]/kafka/v3/clusters/[REDACTED]/topics](https://[REDACTED]/kafka/v3/clusters/[REDACTED]/topics) giving up after 5 attempt(s): Get "[https://[REDACTED]/kafka/v3/clusters/[REDACTED]/topics](https://[REDACTED]/kafka/v3/clusters/[REDACTED/topics)": dial tcp [REDACTED]:443: i/o timeout
-        ```
+![Architecture Diagram](assets/architecture.png)
 
-    * Remove the `confluent_kafka_topic` resource. These resources are provisioned using the Kafka REST API, which is only accessible from the private network.
 
-3. One common deployment workflow for environments with private networking is as follows:
+```bash
+├── Artifacts                             <-- Directory that will hold Terrafom Scripts and Solution Artifacts
+│   ├── chaos_lambda.py                   <-- Lambda function code to simulate out of bounds NOx readings
+│   ├──fix_lambda.py                      <-- Lambda function code to automate NOx level adjustments
+│   ├──aws.tf                             <-- Terraform script to deploy AWS resources
+│   ├──main.tf                            <-- Terraform script to deploy Confluent resources
+│   ├──outputs.tf                         <-- Terraform file for solution outputs
+│   ├──providors.tf                       <-- Terraform providors file
+│   ├──terraform.tfvars                   <-- Variables file
+│   ├──variables.tf                       <-- Variables definition                       
+└── README.md
+```
 
-    * A initial (centrally-run) Terraform deployment provisions infrastructure: network, Kafka cluster, and other resources on cloud provider of your choice to setup private network connectivity (like DNS records)
 
-    * A secondary Terraform deployment (run from within the private network) provisions data-plane resources (Kafka Topics and ACLs)
+## General Requirements
+1. AWS Account
+2. AWS Access keys (create these before starting the setup)
+3. AWS Permissions to AWS IoT, AWS Lambda, AWS Secrets Manager, and IAM
+4. Confluent Cloud account
+5. A created Confluent Cloud cluster within the AWS `us-west-2` region
+6. AWS CLI installed
+7. Have the following python libraries installed: `awsiotsdk` and `awscrt`
+8. Workshop Time: ~ 45 min
 
-    * Note that RBAC role bindings can be provisioned in either the first or second step, as they are provisioned through the [Confluent Cloud API](https://docs.confluent.io/cloud/current/api.html), not the [Kafka REST API](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3))
 
-4. See [VPC Peering on AWS](https://docs.confluent.io/cloud/current/networking/peering/aws-peering.html) for more details.
+## Deploy solution
+
