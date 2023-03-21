@@ -52,7 +52,7 @@ cd Confluent-AWS-IoT-Core-Emissions-Solution/terraform
     * region = "us-west-2"
     * vpc_cidr = "10.0.0.0/16"
     * confluent_topic_name="air-quality-sensor-1"
-    * confluent_cloud_api_key - Confluent Cloud API Key created in [General Requirements]()
+    * confluent_cloud_api_key - Confluent Cloud API Key created in [General Requirements](#general-requirements)
     * confluent_cloud_api_secret -
 5.
 6. Run ```terraform init```
