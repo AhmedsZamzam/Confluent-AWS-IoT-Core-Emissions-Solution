@@ -49,14 +49,112 @@ cd Confluent-AWS-IoT-Core-Emissions-Solution/terraform
 ```
 
 3. Edit the variables in terraform.tfvars files
-    * region = "us-west-2"
-    * vpc_cidr = "10.0.0.0/16"
-    * confluent_topic_name="air-quality-sensor-1"
+    * region = AWS Region to deploy the solion in
+    * vpc_cidr = AWS VPC IP CIDR
+    * confluent_topic_name - Confluent Cloud topic that will hold NOx level readings
     * confluent_cloud_api_key - Confluent Cloud API Key created in [General Requirements](#general-requirements)
-    * confluent_cloud_api_secret -
-5.
-6. Run ```terraform init```
-7. 
+    * confluent_cloud_api_secret -  Confluent Cloud API secret created in [General Requirements](#general-requirements)
+4. Run ```terraform init```
+5. Run ```terraform apply```
+
+
+### Post Deployment Steps
+
+The following will finish the build out of the real-time processing pipeline. In ksqlDB you will create streams that take the average NOx levels of the past 10 most recent records. The connector will be how Confluent Cloud triggers the AWS Lambda, injects ammonia into the boiler system, and lowers NOx levels.
+
+#### ksqlDB
+1. Log into [Confluent Cloud](https://www.confluent.cloud)
+2. Choose the new environemt, cluster and ksqlDB cluster
+3. In the query editor, create a ksqlDB stream based off the topic created in a previous section. This allows ksqlDB to process and transform the data. Paste the following into the query box:
+    ```
+    CREATE STREAM air_quality (device_id int, co_concentration double, nox_concentration double) WITH (
+        kafka_topic = '<confluent_topic_name>',
+        value_format = 'json',
+    KEY_FORMAT='JSON'
+    );
+    ```
+
+4. Create a ksqlDB that holds the latest average of the 10 most recent NOx level readings. Paste the following into the query box:
+    ```
+    CREATE TABLE NOX_LATEST_AVERAGE AS
+    SELECT DEVICE_ID,
+        LATEST_BY_OFFSET(nox_concentration) AS nox_concentration_RECENT,
+        AVG(nox_concentration) AS NOX_AVERAGE
+    FROM  AIR_QUALITY 
+        WINDOW HOPPING (SIZE 1 MINUTES, ADVANCE BY 1 MINUTE)
+    GROUP BY DEVICE_ID
+    HAVING   AVG(nox_concentration) > 3;
+    ```
+    
+### Lambda Sink Connector
+1. Log into [Confluent Cloud](https://www.confluent.cloud)
+2. Choose the new environemt and cluster
+2. Click "Connectors"
+3. Click "Add Connector" and find "AWS Lambda Sink"
+4. Select the topic that has the following format: `pksqlc-xxxxxNOX_LATEST_AVERAGE `
+5. The rest of the values are as follows:
+
+    | Field      | Value |
+    | ----------- | ----------- |
+    | Name      | LambdaSink       |
+    | Input Message Format   | JSON        |
+    |  Kafka API Key      | (API Key created in previous section)      |
+    | Kafka API Secret    | (API Secret created in previous section)         |
+    |  AWS API Key ID     | (Your AWS API Key ID)      |
+    | AWS API Secret Access Key   | (Your AWS API Secret Access Key)         |
+    | AWS Lambda Innvocation Type      | async       |
+    | AWS Lambda function name      | air-quality-fix-simulation-(the environment value you provided in the Cloudformation)       |
+    | Tasks      | 1       |
+    
+    
+    
+## Local Setup
+Create your air emissions monitoring system. This will create a Thing in IoT Core, create and download the appropriate certs, and attach the Thing policy. Your computer will serve as the on-prem emissions monitoring system and create/send simulated data to IoT Core.
+1. Ensure you have the proper python libraries installed by running the following:
+```
+python3 -m pip install awsiotsdk
+python3 -m pip install awscrt 
+```
+1. Run `./assembly-line-setup.sh 1 air-quality-system `
+
+
+## Run the demo
+
+### Start your monitoring system
+1. Get your AWS ATS by running the following (requires AWS CLI):
+
+
+    `aws iot describe-endpoint --endpoint-type iot:Data-ATS`
+    
+    Make note of the returned value.
+2. In your terminal, navigate to the following directory:
+
+    ```cd assembly-line-1/air-quality-system```
+2. Start the air monitoring system with the following command (insert the endpoint value you recieved a couple steps before):
+    
+    `python3 air-quality-sensor.py  --endpoint <xxxxxxxx-ats.iot.us-west-2.amazonaws.com> --line 1 `
+
+
+3. Watch the output for the (a) the initial connections of your device to IoT Core,(b) the shadow creation and setting of your Thing, and (c) the simulated data of emissions levels being set to IoT Core. 
+
+### Simulate out of bounds values
+1. Simulate out of bounds values by going to the Lambda service page and selecting the Lambda prefixed `air-quality-chaos-simulation`. 
+
+2. Create a new event with the following code:
+    ```
+    {
+    "value": "2"
+    }
+    ```
+
+3. Click `Test`. This will update the ammonia values on the emissions monitoring system to a low value. In turn, you will see NOx concentration upwards in the terminal where you have your thing output. At a certain point, your ksqlDB will trigger a different Lambda function that will set the ammonia levels to its proper value. You will then see the NOx concentration values trend downwards once again.
+
+
+## License
+This library is licensed under the MIT-0 License. See the LICENSE file.
+
+
+
 
 
 
