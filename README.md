@@ -107,9 +107,9 @@ The following will finish the build out of the real-time processing pipeline. In
     | AWS Lambda function name      | air-quality-fix-simulation-(the environment value you provided in the Cloudformation)       |
     | Tasks      | 1       |
     
+## Run the demo  
     
-    
-## Local Setup
+### Local Setup
 Create your air emissions monitoring system. This will create a Thing in IoT Core, create and download the appropriate certs, and attach the Thing policy. Your computer will serve as the on-prem emissions monitoring system and create/send simulated data to IoT Core.
 1. Ensure you have the proper python libraries installed by running the following:
 ```
@@ -118,8 +118,6 @@ python3 -m pip install awscrt
 ```
 1. Run `./assembly-line-setup.sh 1 air-quality-system `
 
-
-## Run the demo
 
 ### Start your monitoring system
 1. Get your AWS ATS by running the following (requires AWS CLI):
