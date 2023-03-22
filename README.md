@@ -32,12 +32,11 @@ With all three of these things, you will be able to detect and lower NOx levels 
 
 ## General Requirements
 1. AWS Account
-2. AWS Access keys (create these before starting the setup)
-3. AWS Permissions to AWS IoT, AWS Lambda, AWS Secrets Manager, and IAM
-4. Confluent Cloud account with [Cloud API Keys](https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#cloud-cloud-api-keys)
-6. AWS CLI installed
-7. Have the following python libraries installed: `awsiotsdk` and `awscrt`
-8. Workshop Time: ~ 45 min
+2. AWS Access keys (create these before starting the setup) with permissions to AWS IoT, AWS Lambda, AWS Secrets Manager, and IAM
+3. AWS CLI installed
+4.Confluent Cloud account with [Cloud API Keys](https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#cloud-cloud-api-keys)
+5. Install Python 3.8.2 or later and have the following python libraries installed: `awsiotsdk` and `awscrt`
+6. Workshop Time: ~ 45 min
 
 
 ## Deploy solution
@@ -46,7 +45,7 @@ With all three of these things, you will be able to detect and lower NOx levels 
 2. Change directory to solution repository.
 
 ```
-cd Confluent-AWS-IoT-Core-Emissions-Solution/terraform
+cd Confluent-AWS-IoT-Core-Emissions-Solution
 
 ```
 
@@ -56,8 +55,8 @@ cd Confluent-AWS-IoT-Core-Emissions-Solution/terraform
     * confluent_topic_name - Confluent Cloud topic that will hold NOx level readings
     * confluent_cloud_api_key - Confluent Cloud API Key created in [General Requirements](#general-requirements)
     * confluent_cloud_api_secret -  Confluent Cloud API secret created in [General Requirements](#general-requirements)
-4. Run ```terraform init```
-5. Run ```terraform apply```
+4. Run ```terraform -chdir="./terraform" init```
+5. Run ```terraform -chdir="./terraform" apply```
 
 
 ### Post Deployment Steps
@@ -76,7 +75,7 @@ The following will finish the build out of the real-time processing pipeline. In
     );
     ```
 
-4. Create a ksqlDB that holds the latest average of the 10 most recent NOx level readings. Paste the following into the query box:
+4. Create a ksqlDB table that holds the latest average of the 10 most recent NOx level readings. Paste the following into the query box:
     ```
     CREATE TABLE NOX_LATEST_AVERAGE AS
     SELECT DEVICE_ID,
