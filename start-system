@@ -1,0 +1,2 @@
+cd assembly-line-1/air-quality-system 
+python3 air-quality-sensor.py  --endpoint a3g3567mrs2tly-ats.iot.us-west-2.amazonaws.com --line 1 
