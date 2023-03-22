@@ -31,9 +31,9 @@ With all three of these things, you will be able to detect and lower NOx levels 
 
 
 ## General Requirements
-1. AWS Account
+1. Terraform [installed](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
 2. AWS Access keys (create these before starting the setup) with permissions to AWS IoT, AWS Lambda, AWS Secrets Manager, and IAM
-3. AWS CLI installed
+3. AWS CLI installed and configured with access keys.
 4.Confluent Cloud account with [Cloud API Keys](https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#cloud-cloud-api-keys)
 5. Install Python 3.8.2 or later and have the following python libraries installed: `awsiotsdk` and `awscrt`
 6. Workshop Time: ~ 45 min
