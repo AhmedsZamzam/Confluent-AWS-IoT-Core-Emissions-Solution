@@ -78,7 +78,7 @@ The following will finish the build out of the real-time processing pipeline. In
 4. Create a ksqlDB table that holds the latest average of the 10 most recent NOx level readings. Paste the following into the query box:
     ```
     CREATE TABLE NOX_LATEST_AVERAGE
-    WITH (KAFKA_TOPIC=IOT_DEMO_NOX_LATEST_AVERAGE) 
+    WITH (KAFKA_TOPIC='IOT_DEMO_NOX_LATEST_AVERAGE') 
     AS
     SELECT DEVICE_ID,
         LATEST_BY_OFFSET(nox_concentration) AS nox_concentration_RECENT,
