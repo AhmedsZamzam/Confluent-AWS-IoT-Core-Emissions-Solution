@@ -35,3 +35,12 @@ variable "confluent_topic_name" {
   type        = string
 }
 
+
+variable "confluent_output_topic_name" {
+  description = "Topic name for solution"
+  type        = string
+}
+
+
+
+

@@ -11,23 +11,6 @@ resource "confluent_environment" "staging" {
 }
 
 
-# ------------------------------------------------------
-# SCHEMA REGISTRY
-# ------------------------------------------------------
-data "confluent_schema_registry_region" "sr_region" {
-    cloud = "AWS"
-    region = "us-east-2"
-    package = "ESSENTIALS"
-}
-resource "confluent_schema_registry_cluster" "sr" {
-    package = data.confluent_schema_registry_region.sr_region.package
-    environment {
-        id = confluent_environment.staging.id 
-    }
-    region {
-        id = data.confluent_schema_registry_region.sr_region.id
-    }
-}
 
 # ------------------------------------------------------
 # KAFKA
@@ -49,7 +32,7 @@ resource "confluent_kafka_cluster" "cluster" {
 # SERVICE ACCOUNTS
 # ------------------------------------------------------
 
-// 'app-manager' service account is required in this configuration to create 'orders' topic and assign roles
+// 'app-manager' service account is required in this configuration to create 'input_topic' topic and assign roles
 // to 'app-producer' and 'app-consumer' service accounts.
 resource "confluent_service_account" "app-manager" {
   display_name = "app-manager-${random_id.env_display_id.hex}"
@@ -101,7 +84,7 @@ resource "confluent_kafka_acl" "app-connector-read-on-target-topic" {
     id = confluent_kafka_cluster.cluster.id
   }
   resource_type = "TOPIC"
-  resource_name = "IOT_"
+  resource_name = "iot_"
   pattern_type  = "PREFIXED"
   principal     = "User:${confluent_service_account.connectors.id}"
   host          = "*"
@@ -120,7 +103,7 @@ resource "confluent_kafka_acl" "app-connector-write-to-data-topics" {
     id = confluent_kafka_cluster.cluster.id
   }
   resource_type = "TOPIC"
-  resource_name = "IOT_"
+  resource_name = "iot_"
   pattern_type  = "PREFIXED"
   principal     = "User:${confluent_service_account.connectors.id}"
   host          = "*"
@@ -325,12 +308,27 @@ resource "confluent_api_key" "connector_keys" {
 
 // Provisioning Kafka Topics requires access to the REST endpoint on the Kafka cluster
 // If Terraform is not run from within the private network, this will not work
-resource "confluent_kafka_topic" "orders" {
+resource "confluent_kafka_topic" "input_topic" {
   kafka_cluster {
     id = confluent_kafka_cluster.cluster.id
   }
   topic_name    = var.confluent_topic_name
   rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_topic" "output_topic" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cluster.id
+  }
+  topic_name    = var.confluent_output_topic_name
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  config = {
+    "cleanup.policy" = "compact"
+  }
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -377,7 +375,7 @@ resource "confluent_connector" "lambda_sink" {
     config_nonsensitive = {
       "connector.class": "LambdaSink",
       "name": "Iot_blog_LambdaSinkConnector_0",
-      "topics": "IOT_DEMO_NOX_LATEST_AVERAGE",
+      "topics": confluent_kafka_topic.output_topic.topic_name,
       "input.data.format": "JSON",
       "kafka.auth.mode": "SERVICE_ACCOUNT",
       "kafka.service.account.id" = confluent_service_account.connectors.id,
