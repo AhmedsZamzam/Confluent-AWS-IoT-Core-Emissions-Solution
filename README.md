@@ -59,6 +59,9 @@ cd Confluent-AWS-IoT-Core-Emissions-Solution
 5. Run ```terraform -chdir="./terraform" apply```
 
 
+> **_NOTE:_  Run the ksqlDB queries in the next section as soon as **
+
+
 ### Post Deployment Steps
 
 The following will finish the build out of the real-time processing pipeline. In ksqlDB you will create streams that take the average NOx levels of the past 10 most recent records. The connector will be how Confluent Cloud triggers the AWS Lambda, injects ammonia into the boiler system, and lowers NOx levels.
@@ -73,12 +76,15 @@ The following will finish the build out of the real-time processing pipeline. In
         value_format = 'json',
     KEY_FORMAT='JSON'
     );
+    
     ```
+    
+    
 
 4. Create a ksqlDB table that holds the latest average of the 10 most recent NOx level readings. Paste the following into the query box:
     ```
     CREATE TABLE NOX_LATEST_AVERAGE
-    WITH (KAFKA_TOPIC='IOT_DEMO_NOX_LATEST_AVERAGE') 
+    WITH (KAFKA_TOPIC='iot_demo_nox_avg') 
     AS
     SELECT DEVICE_ID,
         LATEST_BY_OFFSET(nox_concentration) AS nox_concentration_RECENT,
