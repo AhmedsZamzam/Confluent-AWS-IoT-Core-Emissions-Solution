@@ -14,7 +14,7 @@ resource "confluent_environment" "staging" {
 # KAFKA
 # ------------------------------------------------------
 
-resource "confluent_kafka_cluster" "dedicated" {
+resource "confluent_kafka_cluster" "cluster" {
   display_name = "iot-blog"
   availability = "SINGLE_ZONE"
   cloud        = "AWS"
@@ -38,6 +38,12 @@ resource "confluent_service_account" "app-manager" {
 }
 
 
+resource "confluent_service_account" "connectors" {
+    display_name = "connector-sa-${random_id.env_display_id.hex}"
+    description = "Service account for connectors"
+}
+
+
 # ------------------------------------------------------
 # ROLE BINDINGS
 # ------------------------------------------------------
@@ -45,7 +51,193 @@ resource "confluent_service_account" "app-manager" {
 resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
   principal   = "User:${confluent_service_account.app-manager.id}"
   role_name   = "CloudClusterAdmin"
-  crn_pattern = confluent_kafka_cluster.dedicated.rbac_crn
+  crn_pattern = confluent_kafka_cluster.cluster.rbac_crn
+}
+
+
+# ------------------------------------------------------
+# Connectors ACLS
+# ------------------------------------------------------
+
+resource "confluent_kafka_acl" "app-connector-describe-on-cluster" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cluster.id
+  }
+  resource_type = "CLUSTER"
+  resource_name = "kafka-cluster"
+  pattern_type  = "LITERAL"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  host          = "*"
+  operation     = "DESCRIBE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-read-on-target-topic" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "IOT_"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  host          = "*"
+  operation     = "READ"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+
+resource "confluent_kafka_acl" "app-connector-write-to-data-topics" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "IOT_"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  host          = "*"
+  operation     = "WRITE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-create-on-dlq-lcc-topics" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "dlq-lcc"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  host          = "*"
+  operation     = "CREATE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-write-on-dlq-lcc-topics" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "dlq-lcc"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  host          = "*"
+  operation     = "WRITE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-create-on-success-lcc-topics" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "success-lcc"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  host          = "*"
+  operation     = "CREATE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-write-on-success-lcc-topics" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "success-lcc"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  host          = "*"
+  operation     = "WRITE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-create-on-error-lcc-topics" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "error-lcc"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  host          = "*"
+  operation     = "CREATE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-write-on-error-lcc-topics" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "error-lcc"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  host          = "*"
+  operation     = "WRITE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-read-on-connect-lcc-group" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cluster.id
+  }
+  resource_type = "GROUP"
+  resource_name = "connect-lcc"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  host          = "*"
+  operation     = "READ"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
 }
 
 
@@ -68,11 +260,11 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.dedicated.id
-    api_version = confluent_kafka_cluster.dedicated.api_version
-    kind        = confluent_kafka_cluster.dedicated.kind
+    id          = confluent_kafka_cluster.cluster.id
+    api_version = confluent_kafka_cluster.cluster.api_version
+    kind        = confluent_kafka_cluster.cluster.kind
 
-    environment {
+  environment {
       id = confluent_environment.staging.id
     }
   }
@@ -88,6 +280,25 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
 }
 
 
+resource "confluent_api_key" "connector_keys" {
+    display_name = "connectors-api-key-${random_id.env_display_id.hex}"
+    description = "Connector API Key"
+    owner {
+        id = confluent_service_account.connectors.id 
+        api_version = confluent_service_account.connectors.api_version
+        kind = confluent_service_account.connectors.kind
+    }
+    managed_resource {
+        id = confluent_kafka_cluster.cluster.id 
+        api_version = confluent_kafka_cluster.cluster.api_version
+        kind = confluent_kafka_cluster.cluster.kind
+        environment {
+            id = confluent_environment.staging.id
+        }
+    }
+}
+
+
 
 # ------------------------------------------------------
 # KAFKA Topic
@@ -97,10 +308,10 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
 // If Terraform is not run from within the private network, this will not work
 resource "confluent_kafka_topic" "orders" {
   kafka_cluster {
-    id = confluent_kafka_cluster.dedicated.id
+    id = confluent_kafka_cluster.cluster.id
   }
   topic_name    = var.confluent_topic_name
-  rest_endpoint = confluent_kafka_cluster.dedicated.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.cluster.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -116,7 +327,7 @@ resource "confluent_ksql_cluster" "ksql" {
   display_name = "iot-blog"
   csu          = 1
   kafka_cluster {
-    id = confluent_kafka_cluster.dedicated.id
+    id = confluent_kafka_cluster.cluster.id
   }
   credential_identity {
     id = confluent_service_account.app-manager.id
@@ -126,5 +337,47 @@ resource "confluent_ksql_cluster" "ksql" {
   }
   depends_on = [
     confluent_role_binding.app-manager-kafka-cluster-admin
+  ]
+}
+
+
+
+# ------------------------------------------------------
+# Lambda Sink Connector
+# ------------------------------------------------------
+
+
+resource "confluent_connector" "lambda_sink" {
+    environment {
+        id = confluent_environment.staging.id 
+    }
+    kafka_cluster {
+        id = confluent_kafka_cluster.cluster.id
+    }
+    status = "RUNNING"
+    config_nonsensitive = {
+      "connector.class": "LambdaSink",
+      "name": "Iot_blog_LambdaSinkConnector_0",
+      "topics": "IOT_DEMO_NOX_LATEST_AVERAGE",
+      "input.data.format": "AVRO",
+      "kafka.auth.mode": "SERVICE_ACCOUNT",
+      "kafka.service.account.id" = confluent_service_account.connectors.id,
+      "aws.lambda.function.name" = aws_lambda_function.fix_lambda.function_name,
+      "aws.lambda.invocation.type" = "async",
+      "aws.access.key.id": var.aws_key,
+      "aws.secret.access.key": var.aws_secret,
+      "tasks.max": "1"
+    }
+    depends_on = [
+        confluent_kafka_acl.app-connector-describe-on-cluster,
+        confluent_kafka_acl.app-connector-read-on-target-topic,
+        confluent_kafka_acl.app-connector-create-on-dlq-lcc-topics,
+        confluent_kafka_acl.app-connector-write-on-dlq-lcc-topics,
+        confluent_kafka_acl.app-connector-write-to-data-topics,
+        confluent_kafka_acl.app-connector-create-on-success-lcc-topics,
+        confluent_kafka_acl.app-connector-write-on-success-lcc-topics,
+        confluent_kafka_acl.app-connector-create-on-error-lcc-topics,
+        confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
+        confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
   ]
 }

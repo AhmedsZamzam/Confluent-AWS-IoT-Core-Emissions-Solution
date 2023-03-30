@@ -9,6 +9,17 @@ variable "confluent_cloud_api_secret" {
   sensitive   = true
 }
 
+variable "aws_key" {
+  description = "AWS API Key (with Lmabda Invoke Permission)."
+  type        = string
+}
+
+variable "aws_secret" {
+  description = "AWS API Secret."
+  type        = string
+  sensitive   = true
+}
+
 variable "region" {
   description = "The region of Confluent Cloud Network."
   type        = string

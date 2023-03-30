@@ -225,7 +225,7 @@ resource "aws_iot_topic_rule" "rule" {
   kafka {
     client_properties = {
       "acks"                = "1"
-      "bootstrap.servers"   = "${confluent_kafka_cluster.dedicated.bootstrap_endpoint}"
+      "bootstrap.servers"   = "${confluent_kafka_cluster.cluster.bootstrap_endpoint}"
       "compression.type"    = "none"
       "security.protocol"   = "SASL_SSL"
       "key.serializer"    = "org.apache.kafka.common.serialization.StringSerializer"
