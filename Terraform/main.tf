@@ -10,6 +10,25 @@ resource "confluent_environment" "staging" {
   display_name = "iot-blog-${random_id.env_display_id.hex}"
 }
 
+
+# ------------------------------------------------------
+# SCHEMA REGISTRY
+# ------------------------------------------------------
+data "confluent_schema_registry_region" "sr_region" {
+    cloud = "AWS"
+    region = "us-east-2"
+    package = "ESSENTIALS"
+}
+resource "confluent_schema_registry_cluster" "sr" {
+    package = data.confluent_schema_registry_region.sr_region.package
+    environment {
+        id = confluent_environment.staging.id 
+    }
+    region {
+        id = data.confluent_schema_registry_region.sr_region.id
+    }
+}
+
 # ------------------------------------------------------
 # KAFKA
 # ------------------------------------------------------
@@ -359,7 +378,7 @@ resource "confluent_connector" "lambda_sink" {
       "connector.class": "LambdaSink",
       "name": "Iot_blog_LambdaSinkConnector_0",
       "topics": "IOT_DEMO_NOX_LATEST_AVERAGE",
-      "input.data.format": "AVRO",
+      "input.data.format": "JSON",
       "kafka.auth.mode": "SERVICE_ACCOUNT",
       "kafka.service.account.id" = confluent_service_account.connectors.id,
       "aws.lambda.function.name" = aws_lambda_function.fix_lambda.function_name,
