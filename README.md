@@ -124,7 +124,9 @@ Create your air emissions monitoring system. This will create a Thing in IoT Cor
 python3 -m pip install awsiotsdk
 python3 -m pip install awscrt 
 ```
-1. Run `./assembly-line-setup.sh 1 air-quality-system `
+2. Run `chmod 700 ./assembly-line-setup.sh`
+
+3. Run `./assembly-line-setup.sh 1 air-quality-system `
 
 
 ### Start your monitoring system
