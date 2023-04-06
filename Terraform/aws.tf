@@ -211,6 +211,51 @@ resource "aws_iam_role" "Lambda_role" {
     ]
   })
 }
+# ------------------------------------------------------
+# IoT Thing
+# ------------------------------------------------------
+
+resource "aws_iot_thing" "thing" {
+  name = "air-quality-system-1"
+}
+
+resource "aws_iot_thing_principal_attachment" "att" {
+  principal = aws_iot_certificate.cert.arn
+  thing     = aws_iot_thing.thing.name
+}
+
+# ------------------------------------------------------
+# IoT Certificate
+# ------------------------------------------------------
+
+resource "aws_iot_certificate" "cert" {
+  active = true
+}
+
+# ------------------------------------------------------
+# IoT Policy
+# ------------------------------------------------------
+
+resource "aws_iot_policy" "iot_policy" {
+  name = "iot_demo_${random_id.vpc_display_id.hex}"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "iot:*",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
+
+resource "aws_iot_policy_attachment" "policy_att" {
+  policy = aws_iot_policy.iot_policy.name
+  target = aws_iot_certificate.cert.arn
+}
 
 # ------------------------------------------------------
 # IoT Rule
@@ -220,7 +265,7 @@ resource "aws_iot_topic_rule" "rule" {
   name        = "iot_demo_${random_id.vpc_display_id.hex}"
   description = "Rule to Confluent"
   enabled     = true
-  sql         = "SELECT * FROM 'topic/test'"
+  sql         = "SELECT * FROM 'air-quality-sensor/assembly-line-1'"
   sql_version = "2016-03-23"
   kafka {
     client_properties = {
