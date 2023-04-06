@@ -59,7 +59,6 @@ cd Confluent-AWS-IoT-Core-Emissions-Solution
 5. Run ```terraform -chdir="./terraform" apply```
 
 
-> **_NOTE:_  Run the ksqlDB queries in the next section as soon as **
 
 
 ### Post Deployment Steps
@@ -95,41 +94,11 @@ The following will finish the build out of the real-time processing pipeline. In
     HAVING   AVG(nox_concentration) > 3;
     ```
     
-### Lambda Sink Connector
-1. Log into [Confluent Cloud](https://www.confluent.cloud)
-2. Choose the new environemt and cluster
-2. Click "Connectors"
-3. Click "Add Connector" and find "AWS Lambda Sink"
-4. Select the topic that has the following format: `IOT_DEMO_NOX_LATEST_AVERAGE`
-5. The rest of the values are as follows:
 
-    | Field      | Value |
-    | ----------- | ----------- |
-    | Name      | LambdaSink       |
-    | Input Message Format   | JSON        |
-    |  Kafka API Key      | (API Key created in previous section)      |
-    | Kafka API Secret    | (API Secret created in previous section)         |
-    |  AWS API Key ID     | (Your AWS API Key ID)      |
-    | AWS API Secret Access Key   | (Your AWS API Secret Access Key)         |
-    | AWS Lambda Innvocation Type      | async       |
-    | AWS Lambda function name      | air-quality-fix-simulation-(the environment value you provided in the Cloudformation)       |
-    | Tasks      | 1       |
     
-## Run the demo  
-    
-### Local Setup
-Create your air emissions monitoring system. This will create a Thing in IoT Core, create and download the appropriate certs, and attach the Thing policy. Your computer will serve as the on-prem emissions monitoring system and create/send simulated data to IoT Core.
-1. Ensure you have the proper python libraries installed by running the following:
-```
-python3 -m pip install awsiotsdk
-python3 -m pip install awscrt 
-```
-2. Run `chmod 700 ./assembly-line-setup.sh`
+  
 
-3. Run `./assembly-line-setup.sh 1 air-quality-system `
-
-
-### Start your monitoring system
+## Start your monitoring system
 1. Get your AWS ATS by running the following (requires AWS CLI):
 
 
@@ -146,7 +115,7 @@ python3 -m pip install awscrt
 
 3. Watch the output for the (a) the initial connections of your device to IoT Core,(b) the shadow creation and setting of your Thing, and (c) the simulated data of emissions levels being set to IoT Core. 
 
-### Simulate out of bounds values
+## Simulate out of bounds values
 1. Simulate out of bounds values by going to the Lambda service page and selecting the Lambda prefixed `air-quality-chaos-simulation`. 
 
 2. Create a new event with the following code:
