@@ -110,22 +110,6 @@ resource "aws_route_table_association" "pri_subnet_associations" {
     route_table_id = aws_route_table.private_route_table.id
 }
 
-
-
-# ------------------------------------------------------
-# SG
-# ------------------------------------------------------
-
-resource "aws_security_group" "sg" {
-  name        = "iot-demo-${random_id.vpc_display_id.hex}"
-  description = "Allow TLS inbound traffic"
-  vpc_id      = aws_vpc.main.id
-
-  tags = {
-    Name = "allow_tls"
-  }
-}
-
 # ------------------------------------------------------
 # Secrets Manager
 # ------------------------------------------------------
@@ -287,7 +271,7 @@ resource "aws_iot_topic_rule" "rule" {
 resource "aws_iot_topic_rule_destination" "topic_rule_destination" {
   vpc_configuration {
     role_arn        = aws_iam_role.Iot_role.arn
-    security_groups = [aws_security_group.sg.id]
+    security_groups = [aws_vpc.main.default_security_group_id]
     subnet_ids      = aws_subnet.private_subnets[*].id
     vpc_id          = aws_vpc.main.id
   }
