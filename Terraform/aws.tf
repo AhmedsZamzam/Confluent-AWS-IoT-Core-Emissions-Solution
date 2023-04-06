@@ -138,7 +138,7 @@ resource "aws_secretsmanager_secret" "service_user" {
 
 resource "aws_secretsmanager_secret_version" "service_user" {
   secret_id     = aws_secretsmanager_secret.service_user.id
-  secret_string = jsonencode({"confluent_key": "${confluent_api_key.app-manager-kafka-api-key.id}", "confluent_secret": "${confluent_api_key.app-manager-kafka-api-key.secret}"})
+  secret_string = jsonencode({"confluent_key": "${confluent_api_key.connector_keys.id}", "confluent_secret": "${confluent_api_key.connector_keys.secret}"})
 }
 
 
@@ -237,7 +237,7 @@ resource "aws_iot_certificate" "cert" {
 # ------------------------------------------------------
 
 resource "aws_iot_policy" "iot_policy" {
-  name = "iot_demo_${random_id.vpc_display_id.hex}"
+  name = "iot_demo_policy_${random_id.vpc_display_id.hex}"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
